@@ -1,12 +1,13 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Image, ScrollView, Button, SafeAreaView, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, Image, ScrollView, Button, SafeAreaView, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { fetchPosts, fetchUser, fetchTransactions } from '../api/restApi';
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import photo from '../assets/pp.jpeg'
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { RefreshControl } from 'react-native-web';
+
 import { Logout, Sun } from 'lucide-react-native'
+import { useNavigation } from '@react-navigation/native';
 
 export default function HomePage({ navigation }) {
   const [fullname, setFullName] = useState('')
@@ -15,7 +16,7 @@ export default function HomePage({ navigation }) {
   const [firstName, setFirstName] = useState('')
   const [accountNo, setAccountNo] = useState('')
   const [balance, setBalance] = useState('')
-  const [refresing, setRefreshing] = useState('')
+  const [refresing, setRefreshing] = useState(false)
   const [transactions, setTransactions] = useState([]);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -143,10 +144,10 @@ export default function HomePage({ navigation }) {
       </View>
       <View style={{flexDirection: 'row', gap: 8}}>
         <TouchableOpacity>
-          <Sun color='#F8AB39' size={32} />
+          {/* <Sun color='#F8AB39' size={32} /> */}
         </TouchableOpacity>
         <TouchableOpacity onPress={handleLogout}>
-          <Logout color='#000' size={32} />
+          {/* <Logout color='#000' size={32} /> */}
         </TouchableOpacity>
       </View>
     </View>
@@ -361,4 +362,3 @@ const transactions = [
     isPositive: false,
   },
 ];
-
