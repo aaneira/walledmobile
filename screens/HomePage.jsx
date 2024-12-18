@@ -1,32 +1,75 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Image, ScrollView, Button, SafeAreaView, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
-import { fetchPosts } from '../api/restApi';
-import { useEffect, useState } from 'react'
+import { fetchPosts, fetchUser, fetchTransactions } from '../api/restApi';
+import { useEffect, useState, useCallback } from 'react'
+import { useAuth } from '../context/AuthContext'
+import photo from '../assets/pp.jpeg'
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { RefreshControl } from 'react-native-web';
+import { Logout, Sun } from 'lucide-react-native'
 
 export default function HomePage({ navigation }) {
-  
+  const [fullname, setFullName] = useState('')
+  const [accountType, setAccountType] = useState('Personal Account')
+  const [avatar, setAvatar] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [accountNo, setAccountNo] = useState('')
+  const [balance, setBalance] = useState('')
+  const [refresing, setRefreshing] = useState('')
+  const [transactions, setTransactions] = useState([]);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const handleLogout = async () => {
+    await auth.logout()
+    navigation.navigate('Login')
+  }
+
+  const fetchUserData = useCallback(async () => {
+    const response = await fetchUser();
+    const data = response.data
+
+    setFullName(data.full_name);
+    setFirstName(data.full_name.split('')[0]);
+    setAccountNo(data.account_no);
+    setBalance(data.balance);
+    setAvatar(data.avatar_url);
+  }, []);
+
+  const fetchTransactionsData = useCallback (async () => {
+    const response = await fetchUserTransactions();
+    setTransactions(response.data);
+  });
+
   useEffect(() => {
-    const getPosts = async () => {
+    fetchUserData();
+    fetchTransactionsData();
+  }, [fetchUserData, fetchTransactionsData])
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchUserData();
+    setRefreshing(false);
+  }
+
+  useEffect(() => {
+    const getTransactions = async () => {
       try {
-        const data = await fetchPosts();
-        setPosts(data);
+        const data = await fetchTransactions(); // Fetch transactions
+        setTransactions(data);
       } catch (err) {
         setError(err.message);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-
-    getPosts();
-  }, [])
+    };
+    getTransactions();
+  }, []);
 
   if (loading) {
     return <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />;
-  } // kondisi ketika proses memuat response dari backend belum selesai
+  }
 
   if (error) {
     return (
@@ -34,7 +77,26 @@ export default function HomePage({ navigation }) {
         <Text style={styles.errorText}>{error}</Text>
       </View>
     );
-  } // ketika mendapatkan response error backend
+  }
+
+  const renderTransaction = ({ item }) => (
+    <View style={styles.transactionsTable}>
+      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "#E0E0E0", marginRight: 12 }}></View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.type}>{item.type}</Text>
+        <Text style={styles.date}>{item.date}</Text>
+      </View>
+      <Text
+        style={[
+          styles.amount,
+          { color: item.isPositive ? "#00A899" : "#FF3B30" },
+        ]}
+      >
+        {item.amount}
+      </Text>
+    </View>
+  );
 
   const renderItem = ({ item }) =>(
     <View style={styles.transactionsTable}>
@@ -56,34 +118,57 @@ export default function HomePage({ navigation }) {
 
     )
 
+  const HomeHeader = ({ name, accountType, photo}) => {
+    const navigation = useNavigation()
+    const auth = useAuth()
+
+    const handleLogout = async () => {
+      await auth.logout();
+      navigation.navigate('Login')
+    }
+  }
+
   return (
-    <ScrollView>
-    <FlatList
-      data={posts}
-      keyExtractor={(item) => item.id.toString()}
-      renderItem={({ item }) => (
-        <View style={styles.postContainer}>
-          <Text style={styles.title}>{item.first_name}</Text>
-          <Text style={styles.body}>{item.last_name}</Text>
-          <Image
-            source={{uri: item.avatar}}
-            style={{ width: 200, height: 200}}
-          ></Image>
+    <SafeAreaProvider>
+    <SafeAreaView>
+    
+    {/* Header Profile */}
+    <View style={styles.homeheader}>
+      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        <Image source={photo} style={{height: 48, width: 48, borderRadius: 24, borderWidth:4, borderColor: '#19918F'}} />
+        <View>
+          <Text style={{fontWeight: 'bold', fontSize: 16}}>{fullname}</Text>
+          <Text style={{fontSize: 14}}>{accountType}</Text>
         </View>
-      )}
-    />
-
-      <View style={styles.container}>
-        <Image source={require('../assets/pp.jpeg')} style={{width: 46, height: 46, borderRadius: 40, borderWidth: 3, borderColor: 'teal'}}></Image>
-        <View style={{ marginLeft: 20}}>
-          <Text style={{fontWeight: 900}}>Aneira Shafi</Text>
-          <Text >Personal Account</Text>
-        </View>
-        <View style={{flex: 1}}>
-
-        </View>
-        <Image source={require('../assets/logomata.png')}></Image>
+      </View>
+      <View style={{flexDirection: 'row', gap: 8}}>
+        <TouchableOpacity>
+          <Sun color='#F8AB39' size={32} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleLogout}>
+          <Logout color='#000' size={32} />
+        </TouchableOpacity>
+      </View>
     </View>
+
+    <ScrollView
+      refreshControl={
+        <RefreshControl refreshing={refresing} onRefresh={onRefresh} />
+      }
+    >
+    
+    {/* Greeting */}
+    <View style={styles.greeting}>
+      <View style={{flex: 1, justifyContent: 'space-between'}}>
+        <Text style={{fontSize: 20, fontWeight: 'bold'}}>Good Morning, {firstName}</Text>
+        <Text style={{fontSize: 16, marginTop: 12}}>
+          Check all your incoming and outgoing transactions here
+        </Text>
+      </View>
+      <Image source={require('../assets/Group.png')} style={{height: 80, resizeMode: 'contain'}} />
+    </View>
+    
+
     <View style={styles.welcomeHeader}>
     <View style={{width: 250}}>
       <Text style={{fontSize: 20, fontWeight: 'bold', marginBottom: 5}}>Good Morning, Aneira!</Text>
@@ -125,10 +210,11 @@ export default function HomePage({ navigation }) {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={{paddingBottom: 16}}
-
       ></FlatList>
-    </View>
-    </ScrollView>
+      </View>
+      </ScrollView>
+    </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
@@ -219,8 +305,26 @@ const styles = StyleSheet.create({
   body: {
     fontSize: 14,
     color: '#555',
+  },
+  homeheader: {
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    shadowOffset: { width: 0, height: 0.1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 5,
+  },
+  greeting: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
   }
-
 });
 
 const transactions = [

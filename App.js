@@ -7,11 +7,14 @@ import TopUpPage from './screens/TopUpPage'
 import TransferPage from './screens/TransferPage'
 import RegisterPage from './screens/RegisterPage'
 import Modal from './components/Modal'
+import useAuth from './context/AuthContext'
 
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
+import { AuthProvider } from './context/AuthContext';
 import Ionicons from '@expo/vector-icons/Ionicons';
+// import { AuthProvider, }
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -43,9 +46,14 @@ function TabNavigator() {
 }
 
 export default function App() {
+  
+  // const auth = useAuth();
+
   return (
+    <AuthProvider>
     <NavigationContainer>
-      <Stack.Navigator initialRouteName='Login'>
+      <Stack.Navigator initialRouteName='Home'>
+      
       <Stack.Screen 
       name="Login" 
       component={LoginPage} 
@@ -101,6 +109,7 @@ export default function App() {
         />
       </Stack.Navigator>
     </NavigationContainer>
+    </AuthProvider>
   );
 }
 
