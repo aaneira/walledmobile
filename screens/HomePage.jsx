@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import photo from '../assets/pp.jpeg'
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { Logout, Sun } from 'lucide-react-native'
+import { EyeOff, Logout, Sun, Plus, Send } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native';
 
 export default function HomePage({ navigation }) {
@@ -19,8 +19,40 @@ export default function HomePage({ navigation }) {
   const [refresing, setRefreshing] = useState(false)
   const [transactions, setTransactions] = useState([]);
   const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // const [loading, setLoading] = useState(true);
+  // const [error, setError] = useState(null);
+
+  
+    const [showBalance, setShowBalance] = useState(false);
+
+    const handlePress = () => {
+      setShowBalance((currentShowBalance) => !currentShowBalance)}
+
+    const formatDate = (dateStr) => {
+      const date = new Date(dateStr);
+      return new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }).format(date);
+    };
+
+    const formatCurrency = (currency) => {
+      return new Intl.NumberFormat("de-DE", {
+        style: "decimal",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(currency);
+    };
+
+    const inputFormatCurrency = (currency) => {
+      return new Intl.NumberFormat("de-DE", {
+        style: "decimal",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(currency);
+    };
+  
 
   const handleLogout = async () => {
     await auth.logout()
@@ -28,25 +60,32 @@ export default function HomePage({ navigation }) {
   }
 
   const fetchUserData = useCallback(async () => {
-    const response = await fetchUser();
-    const data = response.data
+    try {
+      const response = await fetchUser();
+      console.log('tes', data)
+      const data = response.data
+      setFullName(data.full_name);
+      setFirstName(data.full_name.split('')[0]);
+      setAccountNo(data.account_no);
+      setBalance(data.balance);
+      setAvatar(data.avatar_url);
+      console.log(fullname)
+    } catch (error) {
+      console.log('aa', error)
+    } 
 
-    setFullName(data.full_name);
-    setFirstName(data.full_name.split('')[0]);
-    setAccountNo(data.account_no);
-    setBalance(data.balance);
-    setAvatar(data.avatar_url);
+
   }, []);
 
   const fetchTransactionsData = useCallback (async () => {
-    const response = await fetchUserTransactions();
+    const response = await fetchTransactions();
     setTransactions(response.data);
   });
 
   useEffect(() => {
     fetchUserData();
     fetchTransactionsData();
-  }, [fetchUserData, fetchTransactionsData])
+  }, [])
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -54,31 +93,33 @@ export default function HomePage({ navigation }) {
     setRefreshing(false);
   }
 
-  useEffect(() => {
-    const getTransactions = async () => {
-      try {
-        const data = await fetchTransactions(); // Fetch transactions
-        setTransactions(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    getTransactions();
-  }, []);
+  // useEffect(() => {
+  //   const getTransactions = async () => {
+  //     try {
+  //       const data = await fetchTransactions(); // Fetch transactions
+  //       setTransactions(data);
+  //     } catch (err) {
+  //       setError(err.message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   getTransactions();
+  // }, []);
 
-  if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />;
-  }
+  // if (loading) {
+  //   return( 
+  //     <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
+  //   );
+  // }
 
-  if (error) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-      </View>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <View style={styles.errorContainer}>
+  //       <Text style={styles.errorText}>{error}</Text>
+  //     </View>
+  //   );
+  // }
 
   const renderTransaction = ({ item }) => (
     <View style={styles.transactionsTable}>
@@ -161,7 +202,7 @@ export default function HomePage({ navigation }) {
     {/* Greeting */}
     <View style={styles.greeting}>
       <View style={{flex: 1, justifyContent: 'space-between'}}>
-        <Text style={{fontSize: 20, fontWeight: 'bold'}}>Good Morning, {firstName}</Text>
+        <Text style={{fontSize: 20, fontWeight: 'bold'}}>Good Morning, {fullname}</Text>
         <Text style={{fontSize: 16, marginTop: 12}}>
           Check all your incoming and outgoing transactions here
         </Text>
@@ -170,7 +211,7 @@ export default function HomePage({ navigation }) {
     </View>
     
 
-    <View style={styles.welcomeHeader}>
+    {/* <View style={styles.welcomeHeader}>
     <View style={{width: 250}}>
       <Text style={{fontSize: 20, fontWeight: 'bold', marginBottom: 5}}>Good Morning, Aneira!</Text>
       <Text style={{fontSize: 16}}>Check all your incoming and outgoing transactions here</Text>
@@ -178,12 +219,19 @@ export default function HomePage({ navigation }) {
     <View>
       <Image source={require('../assets/Group.png')}></Image>
     </View>
-    </View>
-    <View style={styles.accountNum}>
+    </View> */}
+    {/* <View style={styles.accountNum}>
       <Text style={{color: 'white', fontSize: 20}}>Account No.</Text>
       <Text style={{color: 'white', fontSize: 20, fontWeight: 'bold'}}>0210202</Text>
+    </View> */}
+
+    {/* Account Number */}
+    <View style={styles.acc}>
+      <Text style={{flex: 1, fontSize: 16, color: '#fff', textAlign: 'left'}}>Account No.</Text>
+      <Text style={{flexShrink: 1, fontSize: 16, color: '#fff', textAlign: 'left'}}>{accountNo}</Text>
     </View>
-    <View style={styles.saldo}>
+
+    {/* <View style={styles.saldo}>
       <View style= {{flex: 1}}>
         <View style={{fontSize: 14, color: '#555', marginBottom: 4}}>
           <Text style={{fontSize: 16, marginBottom: 5}}>Balance</Text>
@@ -201,8 +249,43 @@ export default function HomePage({ navigation }) {
           <Image source={require('../assets/tombolkirim.png')}></Image>
         </TouchableOpacity>
       </View>
-    </View>
-    <View style={{flex: 1, backgroundColor: '#F9F9F9', padding: 20}}>
+    </View> */}
+
+      {/* Balance Detail */}
+      <View style={styles.balance}>
+      <View>
+        <Text style={{fontSize: 14}}>Balance</Text>
+        <View style={{flexDirection: 'row', alignItems: 'center', position: 'relative'}}>
+          <Text style={{fontSize: 24, fontWeight: '600'}}>
+          {/* {showBalance ? `Rp${formatCurrency(balance)}` : "***************"} */}
+          {balance}
+          </Text>
+          {/* <TouchableOpacity>
+            {showBalance ? (
+              <Eye color='#a9a9a9' size={24} />
+            ) : (
+              <EyeOff color='#a9a9a9' size={24} />
+            )}
+          </TouchableOpacity> */}
+          <View>
+            <TouchableOpacity
+              style={styles.iconCon}
+              onPress={() => navigation.navigate("TopUp")}
+            >
+              <Plus color='#fff' size={20} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconCon}
+              onPress={() => navigation.navigate("Transfer")}
+            >
+              <Send color='#fff' size={20} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+      </View>
+
+    {/* <View style={{flex: 1, backgroundColor: '#F9F9F9', padding: 20}}>
       <Text style={{fontSize: 20, fontWeight: 'bold', marginBottom: 12, backgroundColor: 'white', padding: 30}}>
         Transaction History
       </Text>
@@ -212,7 +295,60 @@ export default function HomePage({ navigation }) {
         renderItem={renderItem}
         contentContainerStyle={{paddingBottom: 16}}
       ></FlatList>
-      </View>
+      </View> */}
+
+      {/* <View>
+        <Text style={{fontWeight: "bold", fontSize: 16, paddingHorizontal: 20, paddingBottom: 16, borderBottomColor: "#E5E5E5", borderBottomWidth: 1,}}>
+          Transaction History
+        </Text>
+        <ScrollView style={{paddingTop: 20, paddingHorizontal: 20}}>
+          {transactions.map((transaction, index) => (
+            <View key={index} style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
+              <View style={{flexDirection: 'row', gap: 12, justifyContent: 'flex-start', alignItems: 'center', flex: 1}}>
+              <View>
+
+              </View>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+
+      </View> */}
+
+<View style={{ backgroundColor: "#fff", marginHorizontal: 20, paddingVertical: 12, borderRadius: 10, height: 300}}>
+      <Text style={styles.transtitle}>
+        Transaction History
+      </Text>
+      <ScrollView style={{paddingTop: 20, paddingHorizontal: 20}}>
+        {transactions.map((transaction, index) => (
+          <View key={index} style={{flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16,}}>
+            <View style={{flexDirection: "row", gap: 12, justifyContent: "flex-start", alignItems: "center", flex: 1,}}>
+              <View style={{backgroundColor: "#D9D9D9", height: 32, width: 32, borderRadius: 16,}} />
+              <View>
+                <Text style={{fontSize: 14, fontWeight: 'normal'}}>{transaction.from_to}</Text>
+                <Text style={{fontSize: 12, fontWeight: 'normal'}}>
+                  {transaction.type === "c" ? "TopUp" : "Transfer"}
+                </Text>
+                <Text style={{fontSize: 10, fontWeight: 'normal', color: '#a9a9a9'}}>
+                  {formatDate(transaction.created_at)}
+                </Text>
+              </View>
+            </View>
+            <Text
+              style={[
+                styles.amount,
+                { color: transaction.type === "c" ? "#008000" : "#000" },
+              ]}
+            >
+              {`${transaction.type === "c" ? "+" : "-"} ${formatCurrency(
+                transaction.amount
+              )}`}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+
       </ScrollView>
     </SafeAreaView>
     </SafeAreaProvider>
@@ -325,7 +461,49 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 12,
-  }
+  },
+  acc: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: "#19918F",
+    marginHorizontal: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  balance: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    justifyContent: "space-between",
+    margin: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  iconCon: {
+    backgroundColor: "#19918F",
+    padding: 12,
+    borderRadius: 10,
+    shadowColor: "#19918F",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 10,
+  }, 
+  transtitle: {
+    fontWeight: "bold",
+    fontSize: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomColor: "#E5E5E5",
+    borderBottomWidth: 1,
+  },
+  amount: {
+    flex: 1,
+    fontSize: 14,
+    textAlign: "right",
+  },
 });
 
 const transactions = [

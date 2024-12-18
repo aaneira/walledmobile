@@ -14,16 +14,17 @@ const api = axios.create({
 
 export const fetchUser = async () => {
   try {
+    const token = await AsyncStorage.getItem('userToken')
     const response = await api.get('/users/me', {
       headers: { Authorization: `Bearer ${token}`},
     });
     return response.data;
   } catch (error) {
-    if (error.response.status === 500) {
-      console.error(error.response.data)
-      throw new Error('Failed to fetch user');
-    }
-    return error.response.data;
+    // if (error.response.status === 500) {
+    //   console.error(error.response.data)
+    //   throw new Error('Failed to fetch user');
+    // }
+    throw error;
   }
 }; 
 
